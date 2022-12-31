@@ -1,0 +1,14 @@
+[Unit]
+Description=Prometheus exporter for Postfix
+Documentation={{ postfix_exporter_repo_url }}
+After=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/postfix-exporter \
+{% for k, v in postfix_exporter_args.items() %}
+  --{{ k }}={{ v }} \
+{% endfor %}
+  --web.listen-address {{ postfix_exporter_listen_address }}
+
+[Install]
+WantedBy=default.target

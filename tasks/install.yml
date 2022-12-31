@@ -1,0 +1,41 @@
+---
+
+- name: Clone repository
+  diff: false
+  become: false
+  delegate_to: "{{ 'localhost' if postfix_exporter_build_localhost else omit }}"
+  git:
+    repo: "{{ postfix_exporter_repo_url }}"
+    version: "{{ postfix_exporter_version }}"
+    dest: "/tmp/postfix-exporter-{{ postfix_exporter_version }}"
+    force: true
+
+- name: Get build dependencies
+  become: false
+  delegate_to: "{{ 'localhost' if postfix_exporter_build_localhost else omit }}"
+  ansible.builtin.command:
+    chdir: "/tmp/postfix-exporter-{{ postfix_exporter_version }}"
+    cmd: go mod vendor
+    creates: "/tmp/postfix-exporter-{{ postfix_exporter_version }}/vendor"
+
+- name: Build exporter
+  become: false
+  delegate_to: "{{ 'localhost' if postfix_exporter_build_localhost else omit }}"
+  ansible.builtin.command:
+    chdir: "/tmp/postfix-exporter-{{ postfix_exporter_version }}"
+    cmd: "go build -a -tags {{ __postfix_exporter_build_args }} -o {{ __postfix_exporter_bin_path }}"
+    creates: "{{ __postfix_exporter_bin_path }}"
+  environment:
+    GOOS: "linux"
+    GOARCH: "{{ go_arch }}"
+
+- name: Copy postfix exporter binary
+  become: true
+  copy:
+    src: "{{ __postfix_exporter_bin_path }}"
+    dest: /usr/local/bin/postfix-exporter
+    remote_src: "{{ not postfix_exporter_build_localhost }}"
+    owner: root
+    group: root
+    mode: 0755
+  notify: Restart postfix exporter

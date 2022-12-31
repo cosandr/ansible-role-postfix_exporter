@@ -1,0 +1,12 @@
+---
+
+go_arch_map:
+  i386: '386'
+  x86_64: 'amd64'
+  aarch64: 'arm64'
+  armv7l: 'arm'
+  armv6l: 'arm'
+
+go_arch: "{{ go_arch_map[ansible_architecture] | default(ansible_architecture) }}"
+__postfix_exporter_bin_path: "/tmp/postfix-exporter-{{ postfix_exporter_version }}/postfix-exporter_{{ go_arch }}"
+__postfix_exporter_build_args: "{{ 'static_all,nosystemd' if postfix_exporter_nosystemd else 'static_all' }}"
