@@ -4,6 +4,7 @@ Documentation={{ postfix_exporter_repo_url }}
 After=network-online.target
 
 [Service]
+Restart=always
 ExecStart=/usr/local/bin/postfix-exporter \
 {% for k, v in postfix_exporter_args.items() %}
   --{{ k }}={{ v }} \
