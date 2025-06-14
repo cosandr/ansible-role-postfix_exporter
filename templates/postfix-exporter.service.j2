@@ -6,8 +6,8 @@ After=network-online.target
 [Service]
 Restart=always
 ExecStart=/usr/local/bin/postfix-exporter \
-{% for k, v in postfix_exporter_args.items() %}
-  --{{ k }}={{ v }} \
+{% for item in postfix_exporter_args %}
+  {{ item }} \
 {% endfor %}
   --web.listen-address {{ postfix_exporter_listen_address }}
 

@@ -18,7 +18,7 @@ Ansible 2.12 or higher, `go` (min 1.16) must be installed.
 | `postfix_exporter_repo_url` | https://github.com/netzkommune/postfix_exporter | Path to source code to compile |
 | `postfix_exporter_version` | master | git reference to checkout |
 | `postfix_exporter_listen_address` | :9154 | Exporter web listen address |
-| `postfix_exporter_args` | {} | Extra command line arguments to pass to exporter |
+| `postfix_exporter_args` | [] | Extra command line arguments to pass to exporter |
 | `postfix_exporter_build_localhost` | true | Set to false to build binary on target host, requires `go` |
 | `postfix_exporter_nosystemd` | varies | Defaults to false if building on localhost and target architecture is not `x86_64` |
 
@@ -38,9 +38,9 @@ None.
     - role: postfix_exporter
       vars:
         postfix_exporter_args:
-          "postfix.showq_path": "/var/spool/whatever/showq"
-          "systemd.enable": "true"
-          "systemd.unit": "postfix@-.service"
+          - "--postfix.showq_path=/var/spool/whatever/showq"
+          - "--systemd.enable"
+          - "--systemd.unit=postfix@-.service"
 ```
 
 ## Author
