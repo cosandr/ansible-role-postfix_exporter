@@ -8,5 +8,6 @@ go_arch_map:
   armv6l: 'arm'
 
 go_arch: "{{ go_arch_map[ansible_architecture] | default(ansible_architecture) }}"
-__postfix_exporter_bin_path: "/tmp/postfix-exporter-{{ postfix_exporter_version }}/postfix-exporter_{{ go_arch }}"
-__postfix_exporter_build_args: "{{ 'static_all,nosystemd' if postfix_exporter_nosystemd else 'static_all' }}"
+postfix_exporter_filename: "postfix_exporter_{{ postfix_exporter_version }}_linux_{{ go_arch }}"
+postfix_exporter_checksum_url: "https://github.com/sergeymakinen/postfix_exporter/releases/download/v{{ postfix_exporter_version }}/postfix_exporter_{{ postfix_exporter_version }}_checksums.txt"
+postfix_exporter_archive_url: "https://github.com/sergeymakinen/postfix_exporter/releases/download/v{{ postfix_exporter_version }}/{{ postfix_exporter_filename }}.tar.gz"

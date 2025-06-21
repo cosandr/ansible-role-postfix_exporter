@@ -5,6 +5,12 @@
   become: true
   gather_facts: false
   tasks:
-    - name: "Assertions"
+    - name: Ensure exporter is running
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:9907/metrics"
+        return_content: true
+      register: res
+
+    - name: Ensure we got something
       ansible.builtin.assert:
-        that: true
+        that: "'postfix_exporter_build_info' in res.content"

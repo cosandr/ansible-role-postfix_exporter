@@ -1,9 +1,5 @@
 ---
 
-postfix_exporter_repo_url: https://github.com/netzkommune/postfix_exporter
-postfix_exporter_version: master
-postfix_exporter_listen_address: ":9154"
+postfix_exporter_version: latest
+postfix_exporter_listen_address: ":9907"
 postfix_exporter_args: []
-postfix_exporter_build_localhost: true
-# Cross-compilation fails
-postfix_exporter_nosystemd: "{{ postfix_exporter_build_localhost and ansible_architecture != 'x86_64' }}"

@@ -11,14 +11,12 @@ lint: |
   yamllint .
   ansible-lint
 platforms:
-  - name: default-postfix_exporter
-    image: "${uns:-jam82}/molecule-${img:-almalinux}:${tag:-9}"
-    command: ""
+  - name: debian12-postfix_exporter
+    image: "docker.io/geerlingguy/docker-debian12-ansible"
     pre_build_image: true
     tty: false
-    tmpfs:
-      - /tmp
-      - /run
+    command: "/sbin/init"
+    systemd: true
     volumes:
       - "/sys/fs/cgroup:/sys/fs/cgroup:ro"
 provisioner:
@@ -28,5 +26,10 @@ provisioner:
     prepare: ../resources/playbooks/prepare.yml
     converge: ../resources/playbooks/converge.yml
     verify: ../resources/playbooks/verify.yml
+  inventory:
+    group_vars:
+      all:
+        postfix_exporter_args:
+          - "--collector=journald"
 verifier:
   name: ansible

@@ -4,8 +4,9 @@
 
 **Ansible role for setting up postfix_exporter.**
 
-When cross-compiling, systemd support is disabled by default.
-I assume this is because I'm missing the systemd libraries for other architectures.
+Installs https://github.com/sergeymakinen/postfix_exporter
+
+Dashboard https://gist.github.com/sergeymakinen/7a3ceb3de41fd4f79703b1497c32b33a
 
 ## Requirements
 
@@ -15,12 +16,9 @@ Ansible 2.12 or higher, `go` (min 1.16) must be installed.
 
 | Name           | Default Value | Description                        |
 | -------------- | ------------- | -----------------------------------|
-| `postfix_exporter_repo_url` | https://github.com/netzkommune/postfix_exporter | Path to source code to compile |
-| `postfix_exporter_version` | master | git reference to checkout |
-| `postfix_exporter_listen_address` | :9154 | Exporter web listen address |
+| `postfix_exporter_version` | latest | Version to install |
+| `postfix_exporter_listen_address` | :9907 | Exporter web listen address |
 | `postfix_exporter_args` | [] | Extra command line arguments to pass to exporter |
-| `postfix_exporter_build_localhost` | true | Set to false to build binary on target host, requires `go` |
-| `postfix_exporter_nosystemd` | varies | Defaults to false if building on localhost and target architecture is not `x86_64` |
 
 ## Dependencies
 
@@ -38,9 +36,7 @@ None.
     - role: postfix_exporter
       vars:
         postfix_exporter_args:
-          - "--postfix.showq_path=/var/spool/whatever/showq"
-          - "--systemd.enable"
-          - "--systemd.unit=postfix@-.service"
+          - "--collector=systemd"
 ```
 
 ## Author

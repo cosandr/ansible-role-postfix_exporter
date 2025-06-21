@@ -1,41 +1,75 @@
 ---
 
-- name: Clone repository
-  diff: false
-  become: false
-  delegate_to: "{{ 'localhost' if postfix_exporter_build_localhost else omit }}"
-  git:
-    repo: "{{ postfix_exporter_repo_url }}"
-    version: "{{ postfix_exporter_version }}"
-    dest: "/tmp/postfix-exporter-{{ postfix_exporter_version }}"
-    force: true
+- name: Fetch latest release
+  when: postfix_exporter_version == "latest"
+  block:
+    - name: Get latest release
+      become: false
+      delegate_to: localhost
+      run_once: true
+      ansible.builtin.uri:
+        url: "https://api.github.com/repos/sergeymakinen/postfix_exporter/releases/latest"
+        method: GET
+        return_content: true
+        status_code: 200
+        body_format: json
+        validate_certs: true
+      register: _latest_release
+      until:
+        - _latest_release.status is defined
+        - _latest_release.status == 200
+      retries: 5
+      check_mode: false
 
-- name: Get build dependencies
-  become: false
-  delegate_to: "{{ 'localhost' if postfix_exporter_build_localhost else omit }}"
-  ansible.builtin.command:
-    chdir: "/tmp/postfix-exporter-{{ postfix_exporter_version }}"
-    cmd: go mod vendor
-    creates: "/tmp/postfix-exporter-{{ postfix_exporter_version }}/vendor"
+    - name: "Set postfix_exporter_version version to {{ _latest_release.json.tag_name[1:] }}"
+      ansible.builtin.set_fact:
+        postfix_exporter_version: "{{ _latest_release.json.tag_name[1:] }}"
 
-- name: Build exporter
-  become: false
-  delegate_to: "{{ 'localhost' if postfix_exporter_build_localhost else omit }}"
-  ansible.builtin.command:
-    chdir: "/tmp/postfix-exporter-{{ postfix_exporter_version }}"
-    cmd: "go build -a -tags {{ __postfix_exporter_build_args }} -o {{ __postfix_exporter_bin_path }}"
-    creates: "{{ __postfix_exporter_bin_path }}"
-  environment:
-    GOOS: "linux"
-    GOARCH: "{{ go_arch }}"
+- name: Get checksum list
+  ansible.builtin.set_fact:
+    __postfix_exporter_checksums: "{{ lookup('url', postfix_exporter_checksum_url, wantlist=True) | list }}"
+  run_once: true
+  check_mode: false
+  delegate_to: localhost
 
-- name: Copy postfix exporter binary
+- name: Download postfix-exporter to local folder
+  become: false
+  ansible.builtin.get_url:
+    url: "{{ postfix_exporter_archive_url }}"
+    dest: "/tmp/{{ postfix_exporter_filename }}.tar.gz"
+    checksum: "sha256:{{ (__postfix_exporter_checksums | select('search', postfix_exporter_filename + '.tar.gz') | first).split()[0] }}"
+    mode: "0644"
+  register: _download_archive
+  until: _download_archive is succeeded
+  retries: 5
+  delay: 2
+  delegate_to: localhost
+  check_mode: false
+
+- name: Create dir to extract archive
+  become: false
+  delegate_to: localhost
+  check_mode: false
+  ansible.builtin.file:
+    path: "/tmp/{{ postfix_exporter_filename }}"
+    state: directory
+    mode: "0755"
+
+- name: Unpack postfix-exporter
+  become: false
+  ansible.builtin.unarchive:
+    src: "/tmp/{{ postfix_exporter_filename }}.tar.gz"
+    dest: "/tmp/{{ postfix_exporter_filename }}"
+    creates: "/tmp/{{ postfix_exporter_filename }}/postfix_exporter"
+  delegate_to: localhost
+  check_mode: false
+
+- name: Copy postfix-exporter binary
   become: true
-  copy:
-    src: "{{ __postfix_exporter_bin_path }}"
+  ansible.builtin.copy:
+    src: "/tmp/{{ postfix_exporter_filename }}/postfix_exporter"
     dest: /usr/local/bin/postfix-exporter
-    remote_src: "{{ not postfix_exporter_build_localhost }}"
     owner: root
     group: root
-    mode: 0755
+    mode: "0755"
   notify: Restart postfix exporter
